@@ -1,0 +1,18 @@
+Source: plf-colony
+Section: devel
+Priority: optional
+Maintainer: Adam Borowski <kilobyte@angband.pl>
+Build-Depends: debhelper (>= 11)
+Standards-Version: 4.3.0
+Homepage: https://www.plflib.org/colony.htm
+Vcs-Browser: https://github.com/kilobyte/plf-colony/tree/debian
+Vcs-Git: https://github.com/kilobyte/plf-colony.git -b debian
+
+Package: libplf-colony-dev
+Architecture: all
+Depends: ${misc:Depends}
+Description: fast C++ unordered container
+ plf::colony is an unordered data container providing fast iteration/
+ insertion/erasure while maintaining pointer validity to non-erased
+ elements.  It offers no big-O advantages over std::list but its
+ performance is drastically better.
