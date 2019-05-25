@@ -10,7 +10,7 @@ Vcs-Browser: https://github.com/kilobyte/plf_colony/tree/debian
 Vcs-Git: https://github.com/kilobyte/plf_colony.git -b debian
 
 Package: libplf-colony-dev
-Architecture: all
+Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends}
 Description: fast C++ unordered container

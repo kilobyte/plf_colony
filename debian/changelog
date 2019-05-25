@@ -1,3 +1,10 @@
+plf-colony (5.09-2) unstable; urgency=medium
+
+  * Make the package artificially arch:any, to let the testsuite run and be
+    RC/migration-fatal on all architectures.
+
+ -- Adam Borowski <kilobyte@angband.pl>  Sun, 26 May 2019 01:35:12 +0200
+
 plf-colony (5.09-1) unstable; urgency=medium
 
   * New upstream release.
