@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: Adam Borowski <kilobyte@angband.pl>
 Build-Depends: debhelper (>= 11)
 Standards-Version: 4.3.0
+Rules-Requires-Root: no
 Homepage: https://www.plflib.org/colony.htm
 Vcs-Browser: https://github.com/kilobyte/plf-colony/tree/debian
 Vcs-Git: https://github.com/kilobyte/plf-colony.git -b debian
