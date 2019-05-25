@@ -1,3 +1,14 @@
+plf-colony (5.09-1) unstable; urgency=medium
+
+  * New upstream release.
+  * M-A: foreign.
+  * R³.
+  * Fix VCS URLs.
+  * An autopkgtest: compile a simple program with g++, clang, g++ &
+    valgrind.
+
+ -- Adam Borowski <kilobyte@angband.pl>  Sun, 26 May 2019 01:09:33 +0200
+
 plf-colony (5.06-1) unstable; urgency=medium
 
   * Initial release (Closes: #928155)
