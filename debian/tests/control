@@ -1,0 +1,13 @@
+Test-Command: g++ -Wall -o "$AUTOPKGTEST_TMP"/⁊ debian/tests/simple.cc && "$AUTOPKGTEST_TMP"/⁊
+Features: test-name=simple-gcc
+Depends: @, g++
+
+Test-Command: clang++ -Wall -o "$AUTOPKGTEST_TMP"/⁊ debian/tests/simple.cc && "$AUTOPKGTEST_TMP"/⁊
+Features: test-name=simple-clang
+Depends: @, clang
+Restrictions: skip-not-installable
+
+Test-Command: g++ -Wall -o "$AUTOPKGTEST_TMP"/⁊ debian/tests/simple.cc && valgrind --error-exitcode=1 -q "$AUTOPKGTEST_TMP"/⁊
+Features: test-name=simple-gcc-valgrind
+Depends: @, g++, valgrind
+Restrictions: skip-not-installable
