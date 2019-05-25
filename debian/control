@@ -10,6 +10,7 @@ Vcs-Git: https://github.com/kilobyte/plf-colony.git -b debian
 
 Package: libplf-colony-dev
 Architecture: all
+Multi-Arch: foreign
 Depends: ${misc:Depends}
 Description: fast C++ unordered container
  plf::colony is an unordered data container providing fast iteration/
