@@ -1,3 +1,10 @@
+plf-colony (5.10-1) unstable; urgency=medium
+
+  * New upstream release.
+  * A check-only watch file.
+
+ -- Adam Borowski <kilobyte@angband.pl>  Sat, 15 Jun 2019 00:29:05 +0200
+
 plf-colony (5.09-2) unstable; urgency=medium
 
   * Make the package artificially arch:any, to let the testsuite run and be
