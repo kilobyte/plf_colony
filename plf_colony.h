@@ -229,7 +229,6 @@
 #endif
 
 
-
 namespace plf
 {
 
@@ -460,7 +459,6 @@ public:
 
 			inline colony_iterator & operator = (colony_iterator<!is_const> &&source) PLF_COLONY_NOEXCEPT
 			{
-				assert (&source != this);
 				group_pointer = std::move(source.group_pointer);
 				element_pointer = std::move(source.element_pointer);
 				skipfield_pointer = std::move(source.skipfield_pointer);
@@ -526,9 +524,11 @@ public:
 			if ((element_pointer += skip + 1) == group_pointer->last_endpoint && group_pointer->next_group != NULL) // ie. beyond end of available data
 			{
 				group_pointer = group_pointer->next_group;
-				skip = *(group_pointer->skipfield);
-				element_pointer = group_pointer->elements + skip;
-				skipfield_pointer = group_pointer->skipfield;
+				const aligned_pointer_type elements = group_pointer->elements;
+				const skipfield_pointer_type skipfield = group_pointer->skipfield;
+				skip = *skipfield;
+				element_pointer = elements + skip;
+				skipfield_pointer = skipfield;
 			}
 
 			skipfield_pointer += skip;
@@ -552,9 +552,11 @@ public:
 			if (element_pointer == group_pointer->last_endpoint && group_pointer->next_group != NULL)
 			{
 				group_pointer = group_pointer->next_group;
-				skipfield_pointer = group_pointer->skipfield;
-				element_pointer = group_pointer->elements + *skipfield_pointer;
-				skipfield_pointer += *skipfield_pointer;
+				const aligned_pointer_type elements = group_pointer->elements;
+				const skipfield_pointer_type skipfield = group_pointer->skipfield;
+				const skipfield_type skip = *skipfield;
+				element_pointer = elements + skip;
+				skipfield_pointer = skipfield + skip;
 			}
 		}
 
@@ -579,9 +581,10 @@ public:
 			}
 
 			group_pointer = group_pointer->previous_group;
-			skipfield_pointer = group_pointer->skipfield + group_pointer->capacity - 1;
-			element_pointer = (reinterpret_cast<colony::aligned_pointer_type>(group_pointer->skipfield) - 1) - *skipfield_pointer;
-			skipfield_pointer -= *skipfield_pointer;
+			const skipfield_pointer_type skipfield = group_pointer->skipfield + group_pointer->capacity - 1;
+			const skipfield_type skip = *skipfield;
+			element_pointer = (reinterpret_cast<colony::aligned_pointer_type>(group_pointer->skipfield) - 1) - skip;
+			skipfield_pointer = skipfield - skip;
 
 			return *this;
 		}
@@ -685,7 +688,9 @@ public:
 				group_pointer(std::move(source.group_pointer)),
 				element_pointer(std::move(source.element_pointer)),
 				skipfield_pointer(std::move(source.skipfield_pointer))
-			{}
+			{
+				assert (&source != this);
+			}
 
 
 			inline colony_iterator(colony_iterator<!is_const> &&source) PLF_COLONY_NOEXCEPT:
@@ -727,9 +732,34 @@ public:
 
 
 
+		inline colony_reverse_iterator& operator = (const colony_reverse_iterator<!r_is_const> &source) PLF_COLONY_NOEXCEPT
+		{
+			it = source.it;
+			return *this;
+		}
+
+
+
+		template<bool is_const>
+		inline colony_reverse_iterator& operator = (const colony_iterator<is_const> &source) PLF_COLONY_NOEXCEPT
+		{
+			it = source;
+			return *this;
+		}
+		
+
+
 		#ifdef PLF_COLONY_MOVE_SEMANTICS_SUPPORT
 			// move assignment
 			inline colony_reverse_iterator& operator = (colony_reverse_iterator &&source) PLF_COLONY_NOEXCEPT
+			{
+				assert (&source != this);
+				it = std::move(source.it);
+				return *this;
+			}
+
+
+			inline colony_reverse_iterator& operator = (colony_reverse_iterator<!r_is_const> &&source) PLF_COLONY_NOEXCEPT
 			{
 				it = std::move(source.it);
 				return *this;
@@ -745,7 +775,21 @@ public:
 
 
 
+		inline PLF_COLONY_FORCE_INLINE bool operator == (const colony_reverse_iterator<!r_is_const> &rh) const PLF_COLONY_NOEXCEPT
+		{
+			return (it == rh.it);
+		}
+
+
+
 		inline PLF_COLONY_FORCE_INLINE bool operator != (const colony_reverse_iterator &rh) const PLF_COLONY_NOEXCEPT
+		{
+			return (it != rh.it);
+		}
+
+
+
+		inline PLF_COLONY_FORCE_INLINE bool operator != (const colony_reverse_iterator<!r_is_const> &rh) const PLF_COLONY_NOEXCEPT
 		{
 			return (it != rh.it);
 		}
@@ -867,20 +911,6 @@ public:
 
 
 
-		inline PLF_COLONY_FORCE_INLINE bool operator == (const colony_reverse_iterator<!r_is_const> &rh) const PLF_COLONY_NOEXCEPT
-		{
-			return (it == rh.it);
-		}
-
-
-
-		inline PLF_COLONY_FORCE_INLINE bool operator != (const colony_reverse_iterator<!r_is_const> &rh) const PLF_COLONY_NOEXCEPT
-		{
-			return (it != rh.it);
-		}
-
-
-
 		inline bool operator > (const colony_reverse_iterator<!r_is_const> &rh) const PLF_COLONY_NOEXCEPT
 		{
 			return (rh.it > it);
@@ -920,9 +950,17 @@ public:
 
 
 
-		colony_reverse_iterator (const typename colony::iterator &source) PLF_COLONY_NOEXCEPT:
+		colony_reverse_iterator (const colony_reverse_iterator<!r_is_const> &source) PLF_COLONY_NOEXCEPT:
+			it(source.it)
+		{}
+
+
+
+		template<bool is_const>
+		colony_reverse_iterator (const colony_iterator<is_const> &source) PLF_COLONY_NOEXCEPT:
 			it(source)
 		{}
+
 
 
 
@@ -938,10 +976,12 @@ public:
 			// move constructors
 			colony_reverse_iterator (colony_reverse_iterator &&source) PLF_COLONY_NOEXCEPT:
 				it(std::move(source.it))
-			{}
+			{
+				assert (&source != this);
+			}
 
-			colony_reverse_iterator (typename colony::iterator &&source) PLF_COLONY_NOEXCEPT:
-				it(std::move(source))
+			colony_reverse_iterator (colony_reverse_iterator<!r_is_const> &&source) PLF_COLONY_NOEXCEPT:
+				it(std::move(source.it))
 			{}
 		#endif
 
@@ -1097,6 +1137,7 @@ public:
 			pointer_allocator_pair(source.pointer_allocator_pair.min_elements_per_group),
 			group_allocator_pair(source.group_allocator_pair.max_elements_per_group)
 		{
+			assert (&source != this);
 			source.blank();
 		}
 
@@ -1113,6 +1154,7 @@ public:
 			pointer_allocator_pair(source.pointer_allocator_pair.min_elements_per_group),
 			group_allocator_pair(source.group_allocator_pair.max_elements_per_group)
 		{
+			assert (&source != this);
 			source.blank();
 		}
 	#endif
@@ -1200,7 +1242,7 @@ public:
 
 
 
-	inline PLF_COLONY_FORCE_INLINE const iterator & begin() const PLF_COLONY_NOEXCEPT // To allow for functions which only take const colony & as a source eg. copy constructor
+	inline PLF_COLONY_FORCE_INLINE const_iterator begin() const PLF_COLONY_NOEXCEPT // To allow for functions which only take const colony & as a source eg. copy constructor
 	{
 		return begin_iterator;
 	}
@@ -1214,7 +1256,7 @@ public:
 
 
 
-	inline PLF_COLONY_FORCE_INLINE const iterator & end() const PLF_COLONY_NOEXCEPT
+	inline PLF_COLONY_FORCE_INLINE const_iterator end() const PLF_COLONY_NOEXCEPT
 	{
 		return end_iterator;
 	}
@@ -1223,14 +1265,14 @@ public:
 
 	inline const_iterator cbegin() const PLF_COLONY_NOEXCEPT
 	{
-		return const_iterator(begin_iterator.group_pointer, begin_iterator.element_pointer, begin_iterator.skipfield_pointer);
+		return begin_iterator;
 	}
 
 
 
 	inline const_iterator cend() const PLF_COLONY_NOEXCEPT
 	{
-		return const_iterator(end_iterator.group_pointer, end_iterator.element_pointer, end_iterator.skipfield_pointer);
+		return end_iterator;
 	}
 
 
@@ -1434,10 +1476,7 @@ public:
 				}
 				default: // ie. there are erased elements, reuse previous-erased element locations
 				{
-					iterator new_location;
-					new_location.group_pointer = groups_with_erasures_list_head;
-					new_location.element_pointer = groups_with_erasures_list_head->elements + groups_with_erasures_list_head->free_list_head;
-					new_location.skipfield_pointer = groups_with_erasures_list_head->skipfield + groups_with_erasures_list_head->free_list_head;
+					iterator new_location(groups_with_erasures_list_head, groups_with_erasures_list_head->elements + groups_with_erasures_list_head->free_list_head, groups_with_erasures_list_head->skipfield + groups_with_erasures_list_head->free_list_head);
 
 					// always at start of skipblock, update skipblock:
 					const skipfield_type prev_free_list_index = *(reinterpret_cast<skipfield_pointer_type>(new_location.element_pointer));
@@ -1603,10 +1642,7 @@ public:
 					}
 					default:
 					{
-						iterator new_location;
-						new_location.group_pointer = groups_with_erasures_list_head;
-						new_location.element_pointer = groups_with_erasures_list_head->elements + groups_with_erasures_list_head->free_list_head;
-						new_location.skipfield_pointer = groups_with_erasures_list_head->skipfield + groups_with_erasures_list_head->free_list_head;
+						iterator new_location(groups_with_erasures_list_head, groups_with_erasures_list_head->elements + groups_with_erasures_list_head->free_list_head, groups_with_erasures_list_head->skipfield + groups_with_erasures_list_head->free_list_head);
 
 						const skipfield_type prev_free_list_index = *(reinterpret_cast<skipfield_pointer_type>(new_location.element_pointer));
 						PLF_COLONY_CONSTRUCT(element_allocator_type, (*this), reinterpret_cast<pointer>(new_location.element_pointer), std::move(element));
@@ -1766,10 +1802,7 @@ public:
 					}
 					default:
 					{
-						iterator new_location;
-						new_location.group_pointer = groups_with_erasures_list_head;
-						new_location.element_pointer = groups_with_erasures_list_head->elements + groups_with_erasures_list_head->free_list_head;
-						new_location.skipfield_pointer = groups_with_erasures_list_head->skipfield + groups_with_erasures_list_head->free_list_head;
+						iterator new_location(groups_with_erasures_list_head, groups_with_erasures_list_head->elements + groups_with_erasures_list_head->free_list_head, groups_with_erasures_list_head->skipfield + groups_with_erasures_list_head->free_list_head);
 
 						const skipfield_type prev_free_list_index = *(reinterpret_cast<skipfield_pointer_type>(new_location.element_pointer));
 						PLF_COLONY_CONSTRUCT(element_allocator_type, (*this), reinterpret_cast<pointer>(new_location.element_pointer), std::forward<arguments>(parameters) ...);
@@ -2170,11 +2203,14 @@ private:
 
 
 
-	inline PLF_COLONY_FORCE_INLINE void consolidate() // get all elements contiguous in memory and shrink to fit, remove erasures and erasure free lists
+	inline PLF_COLONY_FORCE_INLINE void consolidate() // get all elements contiguous in memory and shrink to fit, remove erasures and erasure free lists. Invalidates all iterators and pointers to elements
 	{
 		#ifdef PLF_COLONY_MOVE_SEMANTICS_SUPPORT
 			colony temp;
-			temp.change_group_sizes(static_cast<skipfield_type>((pointer_allocator_pair.min_elements_per_group > total_number_of_elements) ? pointer_allocator_pair.min_elements_per_group : ((total_number_of_elements > group_allocator_pair.max_elements_per_group) ? group_allocator_pair.max_elements_per_group : total_number_of_elements)), group_allocator_pair.max_elements_per_group); // Make first allocated group as large total number of elements, where possible
+
+			// Make first allocated group as large total number of elements, where possible:
+			temp.pointer_allocator_pair.min_elements_per_group = static_cast<skipfield_type>((pointer_allocator_pair.min_elements_per_group > total_number_of_elements) ? pointer_allocator_pair.min_elements_per_group : ((total_number_of_elements > group_allocator_pair.max_elements_per_group) ? group_allocator_pair.max_elements_per_group : total_number_of_elements));
+			temp.group_allocator_pair.max_elements_per_group = group_allocator_pair.max_elements_per_group;
 
 			#ifdef PLF_COLONY_TYPE_TRAITS_SUPPORT
 				if PLF_COLONY_CONSTEXPR (std::is_move_assignable<element_type>::value && std::is_move_constructible<element_type>::value)
@@ -2312,7 +2348,7 @@ public:
 				}
 				case 3: // both preceding and following consecutive erased elements - erased element is between two skipblocks
 				{
-               *(it.skipfield_pointer) = 1;  // modification to allow skipfield to be used for SIMD-gather masking
+					*(it.skipfield_pointer) = 1;  // modification to allow skipfield to be used for SIMD-gather masking
 					const skipfield_type preceding_value = *(it.skipfield_pointer - 1);
 					const skipfield_type following_value = static_cast<skipfield_type>(*(it.skipfield_pointer + 1) + 1);
 
@@ -2575,9 +2611,9 @@ public:
 					do
 					{
 						PLF_COLONY_DESTROY(element_allocator_type, (*this), reinterpret_cast<pointer>(current.element_pointer)); // Destruct element
-						++current.skipfield_pointer;
-						current.element_pointer += *current.skipfield_pointer + 1;
-						current.skipfield_pointer += *current.skipfield_pointer;
+						const skipfield_type skip = *(++current.skipfield_pointer);
+						current.element_pointer += skip + 1;
+						current.skipfield_pointer += skip;
 					} while (current.element_pointer != end);
 				}
 
@@ -2595,7 +2631,7 @@ public:
 				PLF_COLONY_DEALLOCATE(group_allocator_type, group_allocator_pair, current_group, 1);
 			}
 
-			current.element_pointer = current.group_pointer->elements + *(current.group_pointer->skipfield);
+			current.element_pointer = current.group_pointer->elements + *(current.group_pointer->skipfield); // TODO
 			current.skipfield_pointer = current.group_pointer->skipfield + *(current.group_pointer->skipfield);
 			current.group_pointer->previous_group = previous_group;
 
@@ -3461,7 +3497,6 @@ public:
 				if (group_pointer->next_group == NULL) // bound to rbegin()
 				{
 					skipfield_pointer = group_pointer->skipfield + (group_pointer->last_endpoint - group_pointer->elements) - 1;
-					--skipfield_pointer;
 					element_pointer = (group_pointer->last_endpoint - 1) - *skipfield_pointer;
 					skipfield_pointer -= *skipfield_pointer;
 					return;

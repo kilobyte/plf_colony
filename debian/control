@@ -3,7 +3,7 @@ Section: devel
 Priority: optional
 Maintainer: Adam Borowski <kilobyte@angband.pl>
 Build-Depends: debhelper-compat (= 12)
-Standards-Version: 4.4.0
+Standards-Version: 4.4.1
 Rules-Requires-Root: no
 Homepage: https://www.plflib.org/colony.htm
 Vcs-Browser: https://github.com/kilobyte/plf_colony/tree/debian

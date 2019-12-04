@@ -320,6 +320,9 @@ int main()
 				failpass("Iterator/Const iterator equality operator test", prev_iterator == prev_iterator2);
 			#endif
 			
+			prev_iterator = p_colony.begin();
+			p_colony.advance(prev_iterator, 5);
+			failpass("Iterator/Const iterator equality operator test 2", prev_iterator == next_iterator);
 			
 			colony<int *> p_colony2;
 			p_colony2 = p_colony;
@@ -940,8 +943,8 @@ int main()
 					size = static_cast<unsigned int>(i_colony.size());
 					range1 = xor_rand() % size;
 					range2 = range1 + 1 + (xor_rand() % (size - range1));
-					i_colony.advance(it1, range1);
-					i_colony.advance(it2, range2);
+					i_colony.advance(it1, static_cast<int>(range1));
+					i_colony.advance(it2, static_cast<int>(range2));
 
 					i_colony.erase(it1, it2);
 
@@ -994,8 +997,8 @@ int main()
 					size = static_cast<unsigned int>(i_colony.size());
 					range1 = xor_rand() % size;
 					range2 = range1 + 1 + (xor_rand() % (size - range1));
-					i_colony.advance(it1, range1);
-					i_colony.advance(it2, range2);
+					i_colony.advance(it1, static_cast<int>(range1));
+					i_colony.advance(it2, static_cast<int>(range2));
 
 					i_colony.erase(it1, it2);
 
@@ -1176,8 +1179,8 @@ int main()
 					size = static_cast<unsigned int>(ss_nt.size());
 					range1 = xor_rand() % size;
 					range2 = range1 + 1 + (xor_rand() % (size - range1));
-					ss_nt.advance(ss_it1, range1);
-					ss_nt.advance(ss_it2, range2);
+					ss_nt.advance(ss_it1, static_cast<int>(range1));
+					ss_nt.advance(ss_it2, static_cast<int>(range2));
 
 					ss_nt.erase(ss_it1, ss_it2);
 
@@ -1788,7 +1791,7 @@ int main()
 			}
 		}
 
-
+		
 	}
 	title1("Test Suite PASS - Press ENTER to Exit");
 	getchar();
