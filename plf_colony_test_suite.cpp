@@ -1,42 +1,29 @@
 #define PLF_COLONY_TEST_DEBUG
 
 #if defined(_MSC_VER)
-	#define PLF_FORCE_INLINE __forceinline
-
 	#if _MSC_VER >= 1900
 		#define PLF_ALIGNMENT_SUPPORT
 		#define PLF_NOEXCEPT noexcept
-		#define PLF_NOEXCEPT_SWAP(the_allocator) noexcept(std::allocator_traits<the_allocator>::propagate_on_container_swap::value || std::allocator_traits<the_allocator>::is_always_equal::value)
-		#define PLF_NOEXCEPT_MOVE_ASSIGNMENT(the_allocator) noexcept(std::allocator_traits<the_allocator>::propagate_on_container_move_assignment::value || std::allocator_traits<the_allocator>::is_always_equal::value)
 	#else
 		#define PLF_NOEXCEPT throw()
-		#define PLF_NOEXCEPT_SWAP(the_allocator)
-		#define PLF_NOEXCEPT_MOVE_ASSIGNMENT(the_allocator) throw()
 	#endif
 
 	#if _MSC_VER >= 1600
 		#define PLF_MOVE_SEMANTICS_SUPPORT
 	#endif
+
 	#if _MSC_VER >= 1700
 		#define PLF_TYPE_TRAITS_SUPPORT
-		#define PLF_ALLOCATOR_TRAITS_SUPPORT
 	#endif
 	#if _MSC_VER >= 1800
 		#define PLF_VARIADICS_SUPPORT // Variadics, in this context, means both variadic templates and variadic macros are supported
 		#define PLF_INITIALIZER_LIST_SUPPORT
 	#endif
 
-	#if defined(_MSVC_LANG) && (_MSVC_LANG >= 201703L)
-		#define PLF_CONSTEXPR constexpr
-		#define PLF_CONSTEXPR_SUPPORT
-	#else
-		#define PLF_CONSTEXPR
-	#endif
 	#if defined(_MSVC_LANG) && (_MSVC_LANG > 201703L)
 		#define PLF_CPP20_SUPPORT
 	#endif
 #elif defined(__cplusplus) && __cplusplus >= 201103L // C++11 support, at least
-	#define PLF_FORCE_INLINE // note: GCC creates faster code without forcing inline
 	#define PLF_MOVE_SEMANTICS_SUPPORT
 
 	#if defined(__GNUC__) && defined(__GNUC_MINOR__) && !defined(__clang__) // If compiler is GCC/G++
@@ -48,22 +35,8 @@
 		#endif
 		#if (__GNUC__ == 4 && __GNUC_MINOR__ < 6) || __GNUC__ < 4
 			#define PLF_NOEXCEPT throw()
-			#define PLF_NOEXCEPT_MOVE_ASSIGNMENT(the_allocator)
-			#define PLF_NOEXCEPT_SWAP(the_allocator)
-		#elif __GNUC__ < 6
+		#else
 			#define PLF_NOEXCEPT noexcept
-			#define PLF_NOEXCEPT_MOVE_ASSIGNMENT(the_allocator) noexcept
-			#define PLF_NOEXCEPT_SWAP(the_allocator) noexcept
-		#else // C++17 support
-			#define PLF_NOEXCEPT noexcept
-			#define PLF_NOEXCEPT_MOVE_ASSIGNMENT(the_allocator) noexcept(std::allocator_traits<the_allocator>::propagate_on_container_move_assignment::value || std::allocator_traits<the_allocator>::is_always_equal::value)
-			#define PLF_NOEXCEPT_SWAP(the_allocator) noexcept(std::allocator_traits<the_allocator>::propagate_on_container_swap::value || std::allocator_traits<the_allocator>::is_always_equal::value)
-		#endif
-		#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || __GNUC__ > 4
-			#define PLF_ALLOCATOR_TRAITS_SUPPORT
-		#endif
-		#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || __GNUC__ > 4
-			#define PLF_ALIGNMENT_SUPPORT
 		#endif
 		#if __GNUC__ >= 5 // GCC v4.9 and below do not support std::is_trivially_copyable
 			#define PLF_TYPE_TRAITS_SUPPORT
@@ -76,73 +49,54 @@
 			#define PLF_INITIALIZER_LIST_SUPPORT
 		#endif
 		#if __GLIBCXX__ >= 20160111
-			#define PLF_ALLOCATOR_TRAITS_SUPPORT
 			#define PLF_NOEXCEPT noexcept
-			#define PLF_NOEXCEPT_MOVE_ASSIGNMENT(the_allocator) noexcept(std::allocator_traits<the_allocator>::propagate_on_container_move_assignment::value || std::allocator_traits<the_allocator>::is_always_equal::value)
-			#define PLF_NOEXCEPT_SWAP(the_allocator) noexcept(std::allocator_traits<the_allocator>::propagate_on_container_swap::value || std::allocator_traits<the_allocator>::is_always_equal::value)
 		#elif __GLIBCXX__ >= 20120322
-			#define PLF_ALLOCATOR_TRAITS_SUPPORT
 			#define PLF_NOEXCEPT noexcept
-			#define PLF_NOEXCEPT_MOVE_ASSIGNMENT(the_allocator) noexcept
-			#define PLF_NOEXCEPT_SWAP(the_allocator) noexcept
 		#else
 			#define PLF_NOEXCEPT throw()
-			#define PLF_NOEXCEPT_MOVE_ASSIGNMENT(the_allocator)
-			#define PLF_NOEXCEPT_SWAP(the_allocator)
-		#endif
-		#if __GLIBCXX__ >= 20130322
-			#define PLF_ALIGNMENT_SUPPORT
 		#endif
 		#if __GLIBCXX__ >= 20150422 // libstdc++ v4.9 and below do not support std::is_trivially_copyable
 			#define PLF_TYPE_TRAITS_SUPPORT
 		#endif
 	#elif (defined(_LIBCPP_CXX03_LANG) || defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) || defined(_LIBCPP_HAS_NO_VARIADICS)) // Special case for checking C++11 support with libCPP
-			#define PLF_NOEXCEPT throw()
-			#define PLF_NOEXCEPT_MOVE_ASSIGNMENT(the_allocator)
-			#define PLF_NOEXCEPT_SWAP(the_allocator)
+		#define PLF_STATIC_ASSERT(check, message) assert(check)
+		#define PLF_NOEXCEPT throw()
 	#else // Assume type traits and initializer support for other compilers and standard libraries
-			#define PLF_VARIADICS_SUPPORT
-			#define PLF_TYPE_TRAITS_SUPPORT
-			#define PLF_MOVE_SEMANTICS_SUPPORT
-			#define PLF_ALLOCATOR_TRAITS_SUPPORT
-			#define PLF_ALIGNMENT_SUPPORT
-			#define PLF_INITIALIZER_LIST_SUPPORT
-			#define PLF_NOEXCEPT noexcept
-			#define PLF_NOEXCEPT_MOVE_ASSIGNMENT(the_allocator) noexcept(std::allocator_traits<the_allocator>::is_always_equal::value)
-			#define PLF_NOEXCEPT_SWAP(the_allocator) noexcept
+		#define PLF_VARIADICS_SUPPORT
+		#define PLF_TYPE_TRAITS_SUPPORT
+		#define PLF_MOVE_SEMANTICS_SUPPORT
+		#define PLF_INITIALIZER_LIST_SUPPORT
+		#define PLF_NOEXCEPT noexcept
 	#endif
 
-	#if __cplusplus >= 201703L   &&   ((defined(__clang__) && ((__clang_major__ == 3 && __clang_minor__ == 9) || __clang_major__ > 3))   ||   (defined(__GNUC__) && __GNUC__ >= 7)   ||   (!defined(__clang__) && !defined(__GNUC__))) // assume correct C++17 implementation for non-GNU/cland compilers
-		#define PLF_CONSTEXPR constexpr
-		#define PLF_CONSTEXPR_SUPPORT
-	#else
-		#define PLF_CONSTEXPR
-	#endif
-	#if __cplusplus > 201703L    &&   ((defined(__clang__) && (__clang_major__ >= 10))   ||   (defined(__GNUC__) && __GNUC__ >= 10)   ||   (!defined(__clang__) && !defined(__GNUC__))) // assume correct C++20 implementation for other compilers
+	#if __cplusplus > 201703L && ((defined(__clang__) && (__clang_major__ >= 10)) || (defined(__GNUC__) && __GNUC__ >= 10) || (!defined(__clang__) && !defined(__GNUC__))) // assume correct C++20 implementation for other compilers
 		#define PLF_CPP20_SUPPORT
 	#endif
 #else
-	#define PLF_FORCE_INLINE
 	#define PLF_NOEXCEPT throw()
-	#define PLF_NOEXCEPT_SWAP(the_allocator)
-	#define PLF_NOEXCEPT_MOVE_ASSIGNMENT(the_allocator)
-	#define PLF_CONSTEXPR
 #endif
 
 
 
-#include <functional> // std::greater
+#include <numeric> // std::accumulate
+#include <functional> // std::greater, std::bind2nd
 #include <vector> // range-insert testing
 #include <algorithm> // std::find
 #include <cstdio> // log redirection, printf
 #include <cstdlib> // abort
 
-#ifdef PLF_MOVE_SEMANTICS_SUPPORT
+#ifdef MOVE_SEMANTICS_SUPPORT
 	#include <utility> // std::move
 #endif
 
 #include "plf_colony.h"
 
+
+
+void message(const char *message_text)
+{
+	printf("%s\n", message_text);
+}
 
 
 void title1(const char *title_text)
@@ -172,6 +126,7 @@ void failpass(const char *test_type, bool condition)
 		abort();
 	}
 }
+
 
 
 #ifdef PLF_VARIADICS_SUPPORT
@@ -233,8 +188,8 @@ struct small_struct_non_trivial
 	int number;
 	unsigned int empty_field4;
 
-	small_struct_non_trivial(const int num) PLF_NOEXCEPT: number(num) {};
-	~small_struct_non_trivial() { ++global_counter; };
+	small_struct_non_trivial(const int num) PLF_NOEXCEPT: number(num) {}
+	~small_struct_non_trivial() { ++global_counter; }
 };
 
 
@@ -314,25 +269,26 @@ int main()
 			failpass("Iterator access test", numtotal == 6000);
 
 			colony<int *>::iterator plus_twenty = p_colony.begin();
-			p_colony.advance(plus_twenty, 20);
+			advance(plus_twenty, 20);
 			colony<int *>::iterator plus_two_hundred = p_colony.begin();
-			p_colony.advance(plus_two_hundred, 200);
+			advance(plus_two_hundred, 200);
 
-			failpass("Iterator + distance test", p_colony.distance(p_colony.begin(), plus_twenty) == 20);
-			failpass("Iterator - distance test", p_colony.distance(plus_two_hundred, p_colony.begin()) == -200);
+			failpass("Iterator + distance test", distance(p_colony.begin(), plus_twenty) == 20);
+			failpass("Iterator - distance test", distance(plus_two_hundred, p_colony.begin()) == -200);
 
-			colony<int *>::iterator next_iterator = p_colony.next(p_colony.begin(), 5);
-			colony<int *>::const_iterator prev_iterator = p_colony.prev(p_colony.cend(), 300);
+			colony<int *>::iterator next_iterator = next(p_colony.begin(), 5);
+			colony<int *>::const_iterator prev_iterator = prev(p_colony.cend(), 300);
 
-			failpass("Iterator next test", p_colony.distance(p_colony.begin(), next_iterator) == 5);
-			failpass("Const iterator prev test", p_colony.distance(p_colony.cend(), prev_iterator) == -300);
+			failpass("Iterator next test", distance(p_colony.begin(), next_iterator) == 5);
+			failpass("Const iterator prev test", distance(p_colony.cend(), prev_iterator) == -300);
+
 			#if defined(__cplusplus) && __cplusplus >= 201402L
-				colony<int *>::iterator prev_iterator2 = p_colony.prev(p_colony.end(), 300);
+				colony<int *>::iterator prev_iterator2 = prev(p_colony.end(), 300);
 				failpass("Iterator/Const iterator equality operator test", prev_iterator == prev_iterator2);
 			#endif
 
 			prev_iterator = p_colony.begin();
-			p_colony.advance(prev_iterator, 5);
+			advance(prev_iterator, 5);
 			failpass("Iterator/Const iterator equality operator test 2", prev_iterator == next_iterator);
 
 			colony<int *> p_colony2;
@@ -369,18 +325,18 @@ int main()
 			failpass("Reverse iterator access test", numtotal == 6000);
 
 			colony<int *>::reverse_iterator r_iterator = p_colony.rbegin();
-			p_colony.advance(r_iterator, 50);
+			advance(r_iterator, 50);
 
-			failpass("Reverse iterator advance and distance test", p_colony.distance(p_colony.rbegin(), r_iterator) == 50);
+			failpass("Reverse iterator advance and distance test", distance(p_colony.rbegin(), r_iterator) == 50);
 
-			colony<int *>::reverse_iterator r_iterator2 = p_colony.next(r_iterator, 2);
+			colony<int *>::reverse_iterator r_iterator2 = next(r_iterator, 2);
 
-			failpass("Reverse iterator next and distance test", p_colony.distance(p_colony.rbegin(), r_iterator2) == 52);
+			failpass("Reverse iterator next and distance test", distance(p_colony.rbegin(), r_iterator2) == 52);
 
 			numtotal = 0;
 			total = 0;
 
-			for(colony<int *>::iterator the_iterator = p_colony.begin(); the_iterator < p_colony.end(); p_colony.advance(the_iterator, 2))
+			for(colony<int *>::iterator the_iterator = p_colony.begin(); the_iterator < p_colony.end(); advance(the_iterator, 2))
 			{
 				++total;
 				numtotal += **the_iterator;
@@ -460,7 +416,7 @@ int main()
 
 			total = 0;
 
-			for(colony<int *>::iterator the_iterator = --(colony<int *>::iterator(p_colony.end())); the_iterator != p_colony.begin(); p_colony.advance(the_iterator, -2))
+			for(colony<int *>::iterator the_iterator = --(colony<int *>::iterator(p_colony.end())); the_iterator != p_colony.begin(); advance(the_iterator, -2))
 			{
 				++total;
 			}
@@ -493,7 +449,7 @@ int main()
 
 			failpass("Swap test", p_colony2.size() == p_colony3.size() - 1);
 
-			swap(p_colony2, p_colony3);
+			std::swap(p_colony2, p_colony3);
 
 			failpass("Swap test 2", p_colony3.size() == p_colony2.size() - 1);
 
@@ -586,14 +542,13 @@ int main()
 						++the_iterator;
 					}
 				}
-
 			} while (!i_colony.empty());
 
 			failpass("Erase randomly till-empty test", i_colony.size() == 0);
 
 
 			i_colony.clear();
-			i_colony.set_minimum_block_capacity(10000);
+			i_colony.reshape(plf::limits(10000, i_colony.block_limits().max));
 
 			i_colony.insert(30000, 1); // fill-insert 30000 elements
 
@@ -669,7 +624,7 @@ int main()
 
 			failpass("Insert post-erase test", i_colony.size() == 500000);
 			colony<int>::iterator it2 = i_colony.begin();
-			i_colony.advance(it2, 250000);
+			advance(it2, 250000);
 
 
 			for (; it2 != i_colony.end();)
@@ -682,7 +637,7 @@ int main()
 			i_colony.insert(250000, 10);
 
 			colony<int>::iterator end_iterator = i_colony.end();
-			i_colony.advance(end_iterator, -250000);
+			advance(end_iterator, -250000);
 
 			for (colony<int>::iterator the_iterator = i_colony.begin(); the_iterator != end_iterator;)
 			{
@@ -704,9 +659,9 @@ int main()
 
 
 			end_iterator = i_colony.end();
-			i_colony.advance(end_iterator, -50001);
+			advance(end_iterator, -50001);
 			colony<int>::iterator begin_iterator = i_colony.begin();
-			i_colony.advance(begin_iterator, 300000);
+			advance(begin_iterator, 300000);
 
 			for (colony<int>::iterator the_iterator = begin_iterator; the_iterator != end_iterator;)
 			{
@@ -719,7 +674,7 @@ int main()
 			i_colony.insert(100000, 10);
 
 			begin_iterator = i_colony.begin();
-			i_colony.advance(begin_iterator, 300001);
+			advance(begin_iterator, 300001);
 
 
 			for (colony<int>::iterator the_iterator = begin_iterator; the_iterator != i_colony.end();)
@@ -730,16 +685,16 @@ int main()
 			failpass("Non-beginning increment + erase test", i_colony.size() == 300001);
 
 			colony<int>::iterator temp_iterator = i_colony.begin();
-			i_colony.advance(temp_iterator, 20); // Advance test 1
+			advance(temp_iterator, 20); // Advance test 1
 
-			unsigned int index = static_cast<unsigned int>(i_colony.distance(i_colony.begin(), temp_iterator));
+			unsigned int index = static_cast<unsigned int>(distance(i_colony.begin(), temp_iterator));
 			failpass("Advance + iterator-to-index test", index == 20);
 
 			i_colony.erase(temp_iterator);
 			temp_iterator = i_colony.begin(); // Check edge-case with advance when erasures present in initial group
-			i_colony.advance(temp_iterator, 500);
+			advance(temp_iterator, 500);
 
-			index = static_cast<unsigned int>(i_colony.distance(i_colony.begin(), temp_iterator));
+			index = static_cast<unsigned int>(distance(i_colony.begin(), temp_iterator));
 
 			failpass("Advance + iterator-to-index test", index == 500);
 
@@ -748,7 +703,7 @@ int main()
 			failpass("Pointer-to-iterator test", temp2 != i_colony.end());
 
 			temp2 = i_colony.begin();
-			i_colony.advance(temp2, 500);
+			advance(temp2, 500);
 
 			failpass("Index-to-iterator test", temp2 == temp_iterator);
 
@@ -762,21 +717,16 @@ int main()
 
 
 			i_colony.clear();
-			i_colony.set_minimum_block_capacity(3);
+			i_colony.reshape(plf::limits(3, i_colony.block_limits().max));
 
 			const unsigned int temp_capacity2 = static_cast<unsigned int>(i_colony.capacity());
 			i_colony.reserve(100000);
 			failpass("Colony reserve test", temp_capacity2 != i_colony.capacity());
-//			failpass("Colony reserve test2", i_colony.capacity() == 100000);
-//
-			for (unsigned int counter = 0; counter != 110000; ++counter)
-			{
-				i_colony.insert(1);
-			}
-			
+
+			i_colony.insert(110000, 1);
+
 			failpass("Post-reserve insert test", i_colony.size() == 110000);
 
-//			i_colony.clear();
 			unsigned int count = 110000;
 
 			for (unsigned int loop1 = 0; loop1 != 50000; ++loop1)
@@ -827,8 +777,8 @@ int main()
 
 			colony<int>::iterator it1 = i_colony.begin(), it2 = i_colony.begin();
 
-			i_colony.advance(it1, 500);
-			i_colony.advance(it2, 800);
+			advance(it1, 500);
+			advance(it2, 800);
 
 			i_colony.erase(it1, it2);
 
@@ -844,8 +794,8 @@ int main()
 
 			it1 = it2 = i_colony.begin();
 
-			i_colony.advance(it1, 400);
-			i_colony.advance(it2, 500); // This should put it2 past the point of previous erasures
+			advance(it1, 400);
+			advance(it2, 500); // This should put it2 past the point of previous erasures
 
 			i_colony.erase(it1, it2);
 
@@ -862,8 +812,8 @@ int main()
 
 			it2 = it1 = i_colony.begin();
 
-			i_colony.advance(it1, 4);
-			i_colony.advance(it2, 9); // This should put it2 past the point of previous erasures
+			advance(it1, 4);
+			advance(it2, 9); // This should put it2 past the point of previous erasures
 
 			i_colony.erase(it1, it2);
 
@@ -881,7 +831,7 @@ int main()
 
 			it2 = it1 = i_colony.begin();
 
-			i_colony.advance(it2, 50);
+			advance(it2, 50);
 
 			i_colony.erase(it1, it2);
 
@@ -900,7 +850,7 @@ int main()
 			it1 = i_colony.begin();
 			it2 = i_colony.end();
 
-			i_colony.advance(it1, 345); // Test erasing and validity when it removes the final group in colony
+			advance(it1, 345); // Test erasing and validity when it removes the final group in colony
 			i_colony.erase(it1, it2);
 
 			counter = 0;
@@ -928,8 +878,8 @@ int main()
 
 			it2 = it1 = i_colony.begin();
 
-			i_colony.advance(it1, 4);
-			i_colony.advance(it2, 600);
+			advance(it1, 4);
+			advance(it2, 600);
 			i_colony.erase(it1, it2);
 
 			counter = 0;
@@ -969,7 +919,7 @@ int main()
 			it1 = i_colony.begin();
 			it2 = i_colony.end();
 
-			i_colony.advance(it1, 400);
+			advance(it1, 400);
 			i_colony.erase(it1, it2);
 
 			counter = 0;
@@ -1003,8 +953,8 @@ int main()
 					size = static_cast<unsigned int>(i_colony.size());
 					range1 = xor_rand() % size;
 					range2 = range1 + 1 + (xor_rand() % (size - range1));
-					i_colony.advance(it1, static_cast<int>(range1));
-					i_colony.advance(it2, static_cast<int>(range2));
+					advance(it1, static_cast<int>(range1));
+					advance(it2, static_cast<int>(range2));
 
 					i_colony.erase(it1, it2);
 
@@ -1057,8 +1007,8 @@ int main()
 					size = static_cast<unsigned int>(i_colony.size());
 					range1 = xor_rand() % size;
 					range2 = range1 + 1 + (xor_rand() % (size - range1));
-					i_colony.advance(it1, static_cast<int>(range1));
-					i_colony.advance(it2, static_cast<int>(range2));
+					advance(it1, static_cast<int>(range1));
+					advance(it2, static_cast<int>(range2));
 
 					i_colony.erase(it1, it2);
 
@@ -1085,7 +1035,7 @@ int main()
 
 					if (i_colony.size() > 100)
 					{ // Test to make sure our stored erased_locations are valid & fill-insert is functioning properly in these scenarios
-						const unsigned int extra_size = xor_rand() % 128;
+						const unsigned int extra_size = xor_rand() & 127;
 						i_colony.insert(extra_size, 5);
 
 						if (i_colony.size() != i_colony.group_size_sum())
@@ -1132,44 +1082,6 @@ int main()
 			i_colony.erase(i_colony.begin(), i_colony.begin());
 
 			failpass("Range-erase when range is empty test (crash test)", i_colony.size() == 10);
-
-
-
-			i_colony.insert(10000, 5);
-
-			int sum1 = 0, sum2 = 0;
-			range1 = 0;
-			range2 = 0;
-
-
-			// Erase half of all elements and sum the rest:
-			for (colony<int>::iterator it = i_colony.begin(); it != i_colony.end(); ++it)
-			{
-				it = i_colony.erase(it);
-				sum1 += *it;
-				++range1;
-			}
-
-
-			colony<int>::raw_memory_block_pointers *data = i_colony.data();
-
-			// Manually sum using raw memory blocks:
-			for (unsigned int block_num = 0; block_num != data->number_of_blocks; ++block_num)
-			{
-				for (unsigned short block_sub_index = 0; block_sub_index != data->block_capacities[block_num]; ++block_sub_index)
-				{
-					if ((data->skipfield_memory_block_pointers[block_num])[block_sub_index] == 0)
-					{
-						// We have to reinterpret_cast (via pointers) back to the original type since colony stores data internally as an aligned version of the same type
-						sum2 += *reinterpret_cast<int *>((data->element_memory_block_pointers[block_num]) + block_sub_index);
-						++range2;
-					}
-				}
-			}
-
-			delete data;
-
-			failpass("Manual summing pass over elements gotten from data()", (sum1 == sum2) && (range1 == range2));
 		}
 
 
@@ -1183,7 +1095,7 @@ int main()
 			small_struct_non_trivial ss(5);
 
 			unsigned int size, range1 = 0, range2 = 0, internal_loop_counter;
-			int counter, sum1 = 0, sum2 = 0;
+			int counter, sum1 = 0;
 
 			ss_nt.insert(10000, ss);
 
@@ -1198,27 +1110,6 @@ int main()
 			}
 
 			failpass("Non-trivial type erase half of all elements", ss_nt.size() == 5000);
-
-
-			colony<small_struct_non_trivial>::raw_memory_block_pointers *data = ss_nt.data();
-
-			// Manually pass over contents:
-			for (unsigned int block_num = 0; block_num != data->number_of_blocks; ++block_num)
-			{
-				for (unsigned short block_sub_index = 0; block_sub_index != data->block_capacities[block_num]; ++block_sub_index)
-				{
-					if (*(data->skipfield_memory_block_pointers[block_num] + block_sub_index) == 0)
-					{
-						// We have to reinterpret_cast (via pointers) back to the original type since the colony stores data as an aligned version of the same type
-						sum2 += (reinterpret_cast<small_struct_non_trivial *>(data->element_memory_block_pointers[block_num] + block_sub_index))->number;
-						++range2;
-					}
-				}
-			}
-
-			delete data;
-
-			failpass("Non-trivial manual summing pass over elements gotten from data()", (sum1 == sum2) && (range1 == range2));
 
 
 			for (unsigned int loop_counter = 0; loop_counter != 50; ++loop_counter)
@@ -1239,8 +1130,8 @@ int main()
 					size = static_cast<unsigned int>(ss_nt.size());
 					range1 = xor_rand() % size;
 					range2 = range1 + 1 + (xor_rand() % (size - range1));
-					ss_nt.advance(ss_it1, static_cast<int>(range1));
-					ss_nt.advance(ss_it2, static_cast<int>(range2));
+					advance(ss_it1, static_cast<int>(range1));
+					advance(ss_it2, static_cast<int>(range2));
 
 					ss_nt.erase(ss_it1, ss_it2);
 
@@ -1336,7 +1227,7 @@ int main()
 			title2("Different insertion-style tests");
 
 			#ifdef PLF_INITIALIZER_LIST_SUPPORT
-				colony<int> i_colony = {1, 2, 3};
+				colony<int> i_colony({1, 2, 3});
 
 				failpass("Initializer-list constructor test", i_colony.size() == 3);
 			#else
@@ -1414,9 +1305,168 @@ int main()
 
 			i_colony2.clear();
 			i_colony2.insert(6000, 2);
-			
+
 			failpass("Clear + fill test", i_colony2.size() == 6000 && *(i_colony2.begin()) == 2);
-	}
+
+			i_colony.insert(i_colony2.begin(), i_colony2.end());
+
+			failpass("Range insert when not empty test", i_colony.size() == 6003);
+		}
+
+
+		{
+			title2("Assign tests");
+
+			colony<int> i_colony(50, 2);
+
+			i_colony.assign(50, 1);
+
+			int total = 0;
+
+			for (colony<int>::iterator it = i_colony.begin(); it != i_colony.end(); ++it)
+			{
+				total += *it;
+			}
+
+			failpass("Equal capacity assign test", i_colony.size() == 50 && total == 50);
+
+
+			i_colony.assign(10, 2);
+
+			total = 0;
+
+			for (colony<int>::iterator it = i_colony.begin(); it != i_colony.end(); ++it)
+			{
+				total += *it;
+			}
+
+			failpass("Lesser capacity assign test", i_colony.size() == 10 && total == 20);
+
+
+			i_colony.assign(2000, 20);
+
+			total = 0;
+
+			for (colony<int>::iterator it = i_colony.begin(); it != i_colony.end(); ++it)
+			{
+				total += *it;
+			}
+
+			failpass("Greater capacity assign test", i_colony.size() == 2000 && total == 40000);
+
+			i_colony.clear();
+
+
+			for (unsigned int internal_loop_counter = 0; internal_loop_counter != 10; ++internal_loop_counter)
+			{
+				const unsigned int capacity = xor_rand() & 65535;
+				i_colony.assign(capacity, 1);
+
+				total = 0;
+
+				for (colony<int>::iterator it = i_colony.begin(); it != i_colony.end(); ++it)
+				{
+					total += *it;
+				}
+
+				if (i_colony.size() != capacity)
+				{
+					printf("Fuzz-test assign capacity Fail: global loop counter: %u, internal loop counter: %u.\n", looper, internal_loop_counter);
+					getchar();
+					abort();
+				}
+
+				if (i_colony.size() != static_cast<unsigned int>(total))
+				{
+					printf("Fuzz-test assign sum Fail: global loop counter: %u, internal loop counter: %u.\n", looper, internal_loop_counter);
+					getchar();
+					abort();
+				}
+			}
+
+			message("Fuzz-test assign passed.");
+
+
+			i_colony.clear();
+
+			std::vector<int> i_vector;
+
+			for (int counter = 1; counter != 11; ++counter)
+			{
+				i_vector.push_back(counter);
+			}
+
+			i_colony.assign(i_vector.begin(), i_vector.end());
+
+			plf::colony<int>::iterator it = i_colony.begin();
+			bool fail = false;
+
+			for (int counter = 1; counter != 11; ++counter, ++it)
+			{
+				if (*it != counter)
+				{
+					fail = true;
+					break;
+				}
+			}
+
+			failpass("Range assign test", i_colony.size() == 10 && !fail);
+
+
+			i_colony.clear();
+
+
+			for (unsigned int internal_loop_counter = 0; internal_loop_counter != 10; ++internal_loop_counter)
+			{
+				const unsigned int capacity = xor_rand() & 65535;
+				i_vector.assign(capacity, 1);
+				i_colony.assign(i_vector.begin(), i_vector.end());
+
+				total = 0;
+
+				for (colony<int>::iterator it3 = i_colony.begin(); it3 != i_colony.end(); ++it3)
+				{
+					total += *it3;
+				}
+
+				if (i_colony.size() != capacity)
+				{
+					printf("Fuzz-test range assign capacity Fail: global loop counter: %u, internal loop counter: %u.\n", looper, internal_loop_counter);
+					getchar();
+					abort();
+				}
+
+				if (i_colony.size() != static_cast<unsigned int>(total))
+				{
+					printf("Fuzz-test range assign sum Fail: global loop counter: %u, internal loop counter: %u.\n", looper, internal_loop_counter);
+					getchar();
+					abort();
+				}
+			}
+
+			message("Fuzz-test range assign passed.");
+
+
+			i_colony.clear();
+
+			#ifdef PLF_INITIALIZER_LIST_SUPPORT
+				i_colony.assign({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+				it = i_colony.begin();
+
+				for (int counter = 1; counter != 11; ++counter, ++it)
+				{
+					if (*it != counter)
+					{
+						fail = true;
+						break;
+					}
+				}
+
+				failpass("Initializer_list assign test", i_colony.size() == 10 && !fail);
+
+				i_colony.clear();
+			#endif
+		}
 
 
 		#ifdef PLF_VARIADICS_SUPPORT
@@ -1476,7 +1526,7 @@ int main()
 			title2("Misc function tests");
 
 			colony<int> colony1;
-			colony1.set_block_capacity_limits(plf::limits(50, 100));
+			colony1.reshape(plf::limits(50, 100));
 
 			colony1.insert(27);
 
@@ -1490,15 +1540,15 @@ int main()
 			failpass("Change_group_sizes max-size test", colony1.capacity() == 200);
 
 			colony1.clear();
-			colony1.set_block_capacity_limits(plf::limits(200, 2000));
+			colony1.reshape(plf::limits(200, 2000));
 
 			colony1.insert(27);
 
 			failpass("Reinitialize min-size test", colony1.capacity() == 200);
 
-			plf::limits temp_limits = colony1.get_block_capacity_limits();
+			plf::limits temp_limits = colony1.block_limits();
 
-			failpass("get_block_capacity_limits test", temp_limits.min == 200 && temp_limits.max == 2000);
+			failpass("get_block_limits test", temp_limits.min == 200 && temp_limits.max == 2000);
 
 			for (int counter = 0; counter != 3300; ++counter)
 			{
@@ -1507,12 +1557,11 @@ int main()
 
 			failpass("Reinitialize max-size test", colony1.capacity() == 5200);
 
-			colony1.set_block_capacity_limits(plf::limits(500, 500));
+			colony1.reshape(plf::limits(500, 500));
 
 			failpass("Change_group_sizes resize test", colony1.capacity() == 3500);
 
-			colony1.set_minimum_block_capacity(200);
-			colony1.set_maximum_block_capacity(200);
+			colony1.reshape(plf::limits(200, 200));
 
 			failpass("Change_maximum_group_size resize test", colony1.capacity() == 3400);
 
@@ -1702,8 +1751,8 @@ int main()
 			{
 				colony<int> colony1, colony2;
 
-				colony1.set_block_capacity_limits(plf::limits(200, 200));
-				colony2.set_block_capacity_limits(plf::limits(200, 200));
+				colony1.reshape(plf::limits(200, 200));
+				colony2.reshape(plf::limits(200, 200));
 
 				for(int number = 0; number != 100; ++number)
 				{
@@ -1858,6 +1907,61 @@ int main()
 				failpass("Post-splice insert-and-erase randomly till-empty test", colony1.size() == 0);
 			}
 		}
+
+		{
+			title2("erase_if tests");
+
+			plf::colony<int> i_colony(100, 100);
+
+			i_colony.insert(100, 200);
+			plf::colony<int> i_colony2 = i_colony;
+
+			erase(i_colony, 100);
+			int total = std::accumulate(i_colony.begin(), i_colony.end(), 0);
+
+			failpass("non-member erase test 1", total == 20000);
+
+			erase(i_colony2, 200);
+			total = std::accumulate(i_colony2.begin(), i_colony2.end(), 0);
+
+			failpass("non-member erase test 2", total == 10000);
+
+
+			i_colony.clear();
+
+			for(int count = 0; count != 1000; ++count)
+			{
+				i_colony.insert((xor_rand() & 1));
+			}
+
+			i_colony2 = i_colony;
+
+			const int count0 = static_cast<int>(std::count(i_colony.begin(), i_colony.end(), 0));
+			const int count1 = 1000 - count0;
+
+			erase(i_colony, 0);
+			failpass("random non-member erase test 1", static_cast<int>(i_colony.size()) == count1);
+
+			erase(i_colony2, 1);
+			failpass("random non-member erase test 2",  static_cast<int>(i_colony2.size()) == count0);
+
+
+			i_colony.clear();
+
+			for(int count = 0; count != 1000; ++count)
+			{
+				i_colony.insert(count);
+			}
+
+			#ifdef PLF_MOVE_SEMANTICS_SUPPORT // approximating checking for C++11 here
+				erase_if(i_colony, std::bind(std::greater<int>(), std::placeholders::_1, 499));
+			#else // C++03 or lower
+				erase_if(i_colony, std::bind2nd(std::greater<int>(), 499));
+			#endif
+
+			failpass("erase_if test",  static_cast<int>(i_colony.size()) == 500);
+		}
+
 
 
 	}

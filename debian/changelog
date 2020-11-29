@@ -1,3 +1,10 @@
+plf-colony (6.03-1) unstable; urgency=medium
+
+  * New upstream release.
+  * dh 13.
+
+ -- Adam Borowski <kilobyte@angband.pl>  Sun, 29 Nov 2020 20:38:41 +0100
+
 plf-colony (5.42-1) unstable; urgency=medium
 
   * New upstream release.
