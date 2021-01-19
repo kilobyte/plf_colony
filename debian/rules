@@ -8,5 +8,5 @@ export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
 	dh $@
 
 override_dh_auto_test:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -o testsuite plf_colony_test_suite.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) -I debian/ -o testsuite plf_colony_test_suite.cpp
 	echo|./testsuite
