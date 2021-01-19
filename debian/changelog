@@ -1,8 +1,10 @@
 plf-colony (6.12-1) unstable; urgency=medium
 
   * New upstream release.
+  * Temporarily grab plf_rand.h (test dependency), should be packaged
+    separately.
 
- -- Adam Borowski <kilobyte@angband.pl>  Tue, 19 Jan 2021 12:10:37 +0100
+ -- Adam Borowski <kilobyte@angband.pl>  Tue, 19 Jan 2021 12:56:18 +0100
 
 plf-colony (6.03-1) unstable; urgency=medium
 
