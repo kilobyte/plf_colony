@@ -1,79 +1,70 @@
 #define PLF_COLONY_TEST_DEBUG
 
 #if defined(_MSC_VER)
-	#if _MSC_VER >= 1900
-		#define PLF_ALIGNMENT_SUPPORT
-		#define PLF_NOEXCEPT noexcept
-	#else
-		#define PLF_NOEXCEPT throw()
-	#endif
-
 	#if _MSC_VER >= 1600
-		#define PLF_MOVE_SEMANTICS_SUPPORT
+		#define PLF_TEST_MOVE_SEMANTICS_SUPPORT
 	#endif
-
 	#if _MSC_VER >= 1700
-		#define PLF_TYPE_TRAITS_SUPPORT
+		#define PLF_TEST_TYPE_TRAITS_SUPPORT
 	#endif
 	#if _MSC_VER >= 1800
-		#define PLF_VARIADICS_SUPPORT // Variadics, in this context, means both variadic templates and variadic macros are supported
-		#define PLF_INITIALIZER_LIST_SUPPORT
+		#define PLF_TEST_VARIADICS_SUPPORT // Variadics, in this context, means both variadic templates and variadic macros are supported
+		#define PLF_TEST_INITIALIZER_LIST_SUPPORT
 	#endif
 
 	#if defined(_MSVC_LANG) && (_MSVC_LANG > 201703L)
-		#define PLF_CPP20_SUPPORT
+		#define PLF_TEST_CPP20_SUPPORT
 	#endif
 #elif defined(__cplusplus) && __cplusplus >= 201103L // C++11 support, at least
-	#define PLF_MOVE_SEMANTICS_SUPPORT
+	#define PLF_TEST_MOVE_SEMANTICS_SUPPORT
 
 	#if defined(__GNUC__) && defined(__GNUC_MINOR__) && !defined(__clang__) // If compiler is GCC/G++
 		#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) || __GNUC__ > 4 // 4.2 and below do not support variadic templates
-			#define PLF_VARIADICS_SUPPORT
+			#define PLF_TEST_MOVE_SEMANTICS_SUPPORT
+			#define PLF_TEST_VARIADICS_SUPPORT
 		#endif
 		#if (__GNUC__ == 4 && __GNUC_MINOR__ >= 4) || __GNUC__ > 4 // 4.3 and below do not support initializer lists
-			#define PLF_INITIALIZER_LIST_SUPPORT
-		#endif
-		#if (__GNUC__ == 4 && __GNUC_MINOR__ < 6) || __GNUC__ < 4
-			#define PLF_NOEXCEPT throw()
-		#else
-			#define PLF_NOEXCEPT noexcept
+			#define PLF_TEST_INITIALIZER_LIST_SUPPORT
 		#endif
 		#if __GNUC__ >= 5 // GCC v4.9 and below do not support std::is_trivially_copyable
-			#define PLF_TYPE_TRAITS_SUPPORT
+			#define PLF_TEST_TYPE_TRAITS_SUPPORT
 		#endif
-	#elif defined(__GLIBCXX__) // Using another compiler type with libstdc++ - we are assuming full c++11 compliance for compiler - which may not be true
-		#if __GLIBCXX__ >= 20080606 	// libstdc++ 4.2 and below do not support variadic templates
-			#define PLF_VARIADICS_SUPPORT
+	#elif defined(__clang__) && !defined(__GLIBCXX__) && !defined(_LIBCPP_CXX03_LANG)
+		#if __clang_major__ >= 3 // clang versions < 3 don't support __has_feature() or traits
+			#define PLF_TEST_TYPE_TRAITS_SUPPORT
+
+			#if __has_feature(cxx_rvalue_references) && !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
+				#define PLF_TEST_MOVE_SEMANTICS_SUPPORT
+			#endif
+			#if __has_feature(cxx_variadic_templates) && !defined(_LIBCPP_HAS_NO_VARIADICS)
+				#define PLF_TEST_VARIADICS_SUPPORT
+			#endif
+			#if (__clang_major__ == 3 && __clang_minor__ >= 1) || __clang_major__ > 3
+				#define PLF_TEST_INITIALIZER_LIST_SUPPORT
+			#endif
 		#endif
-		#if __GLIBCXX__ >= 20090421 	// libstdc++ 4.3 and below do not support initializer lists
-			#define PLF_INITIALIZER_LIST_SUPPORT
+	#elif defined(__GLIBCXX__)
+		#if __GLIBCXX__ >= 20080606
+			#define PLF_TEST_MOVE_SEMANTICS_SUPPORT
+			#define PLF_TEST_VARIADICS_SUPPORT
 		#endif
-		#if __GLIBCXX__ >= 20160111
-			#define PLF_NOEXCEPT noexcept
-		#elif __GLIBCXX__ >= 20120322
-			#define PLF_NOEXCEPT noexcept
-		#else
-			#define PLF_NOEXCEPT throw()
+		#if __GLIBCXX__ >= 20090421
+			#define PLF_TEST_INITIALIZER_LIST_SUPPORT
 		#endif
-		#if __GLIBCXX__ >= 20150422 // libstdc++ v4.9 and below do not support std::is_trivially_copyable
-			#define PLF_TYPE_TRAITS_SUPPORT
+		#if __GLIBCXX__ >= 20150422
+			#define PLF_TEST_TYPE_TRAITS_SUPPORT
 		#endif
-	#elif (defined(_LIBCPP_CXX03_LANG) || defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) || defined(_LIBCPP_HAS_NO_VARIADICS)) // Special case for checking C++11 support with libCPP
-		#define PLF_STATIC_ASSERT(check, message) assert(check)
-		#define PLF_NOEXCEPT throw()
-	#else // Assume type traits and initializer support for other compilers and standard libraries
-		#define PLF_VARIADICS_SUPPORT
-		#define PLF_TYPE_TRAITS_SUPPORT
-		#define PLF_MOVE_SEMANTICS_SUPPORT
-		#define PLF_INITIALIZER_LIST_SUPPORT
-		#define PLF_NOEXCEPT noexcept
+	#elif !(defined(_LIBCPP_CXX03_LANG) || defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) || defined(_LIBCPP_HAS_NO_VARIADICS))
+		// Assume full support for other compilers and standard libraries
+		#define PLF_TEST_VARIADICS_SUPPORT
+		#define PLF_TEST_TYPE_TRAITS_SUPPORT
+		#define PLF_TEST_MOVE_SEMANTICS_SUPPORT
+		#define PLF_TEST_INITIALIZER_LIST_SUPPORT
 	#endif
 
 	#if __cplusplus > 201703L && ((defined(__clang__) && (__clang_major__ >= 10)) || (defined(__GNUC__) && __GNUC__ >= 10) || (!defined(__clang__) && !defined(__GNUC__))) // assume correct C++20 implementation for other compilers
-		#define PLF_CPP20_SUPPORT
+		#define PLF_TEST_CPP20_SUPPORT
 	#endif
-#else
-	#define PLF_NOEXCEPT throw()
 #endif
 
 
@@ -89,6 +80,7 @@
 	#include <utility> // std::move
 #endif
 
+#include "plf_rand.h"
 #include "plf_colony.h"
 
 
@@ -129,7 +121,7 @@ void failpass(const char *test_type, bool condition)
 
 
 
-#ifdef PLF_VARIADICS_SUPPORT
+#ifdef PLF_TEST_VARIADICS_SUPPORT
 	struct perfect_forwarding_test
 	{
 		const bool success;
@@ -157,7 +149,7 @@ void failpass(const char *test_type, bool condition)
 		int number;
 		unsigned int empty_field4;
 
-		small_struct(const int num) PLF_NOEXCEPT: number(num) {};
+		small_struct(const int num) : number(num) {};
 	};
 
 
@@ -188,31 +180,11 @@ struct small_struct_non_trivial
 	int number;
 	unsigned int empty_field4;
 
-	small_struct_non_trivial(const int num) PLF_NOEXCEPT: number(num) {}
+	small_struct_non_trivial(const int num) : number(num) {}
 	~small_struct_non_trivial() { ++global_counter; }
 };
 
 
-
-
-
-// Fast xorshift+128 random number generator function (original: https://codingforspeed.com/using-faster-psudo-random-generator-xorshift/)
-unsigned int xor_rand()
-{
-	static unsigned int x = 123456789;
-	static unsigned int y = 362436069;
-	static unsigned int z = 521288629;
-	static unsigned int w = 88675123;
-
-	const unsigned int t = x ^ (x << 11);
-
-	// Rotate the static values (w rotation in return statement):
-	x = y;
-	y = z;
-	z = w;
-
-	return w = w ^ (w >> 19) ^ (t ^ (t >> 8));
-}
 
 
 
@@ -423,7 +395,7 @@ int main()
 
 			failpass("Negative multiple iteration test", total == 200);
 
-			#ifdef PLF_MOVE_SEMANTICS_SUPPORT
+			#ifdef PLF_TEST_MOVE_SEMANTICS_SUPPORT
 				p_colony2 = std::move(p_colony);
 				failpass("Move test", p_colony2.size() == 400);
 
@@ -486,7 +458,7 @@ int main()
 
 			failpass("Iterator != test", it2 != it1);
 
-			#ifdef PLF_CPP20_SUPPORT
+			#ifdef PLF_TEST_CPP20_SUPPORT
 				failpass("Iterator <=> test 1", (it2 <=> it1) == 1);
 
 				failpass("Iterator <=> test 2", (it1 <=> it2) == -1);
@@ -533,7 +505,7 @@ int main()
 			{
 				for (colony<int>::iterator the_iterator = i_colony.begin(); the_iterator != i_colony.end();)
 				{
-					if ((xor_rand() & 7) == 0)
+					if ((plf::rand() & 7) == 0)
 					{
 						the_iterator = i_colony.erase(the_iterator);
 					}
@@ -560,7 +532,7 @@ int main()
 			{
 				for (colony<int>::iterator the_iterator = i_colony.begin(); the_iterator != i_colony.end();)
 				{
-					if ((xor_rand() & 7) == 0)
+					if ((plf::rand() & 7) == 0)
 					{
 						the_iterator = i_colony.erase(the_iterator);
 						++count2;
@@ -605,7 +577,7 @@ int main()
 			{
 				for (colony<int>::iterator the_iterator = i_colony.begin(); the_iterator != i_colony.end();)
 				{
-					if ((xor_rand() & 3) == 0)
+					if ((plf::rand() & 3) == 0)
 					{
 						++the_iterator;
 						i_colony.insert(1);
@@ -637,7 +609,12 @@ int main()
 			i_colony.insert(250000, 10);
 
 			colony<int>::iterator end_iterator = i_colony.end();
+			colony<int>::iterator end_iterator2 = i_colony.end();
 			advance(end_iterator, -250000);
+
+			for (unsigned int count = 0; count != 250000; ++count, --end_iterator2){}
+			failpass("Large multi-decrement iterator test 1", end_iterator == end_iterator2);
+
 
 			for (colony<int>::iterator the_iterator = i_colony.begin(); the_iterator != end_iterator;)
 			{
@@ -645,6 +622,7 @@ int main()
 			}
 
 			failpass("Large multi-decrement iterator test", i_colony.size() == 250000);
+
 
 
 			i_colony.insert(250000, 10);
@@ -733,7 +711,7 @@ int main()
 			{
 				for (unsigned int loop = 0; loop != 10; ++loop)
 				{
-					if ((xor_rand() & 7) == 0)
+					if ((plf::rand() & 7) == 0)
 					{
 						i_colony.insert(1);
 						++count;
@@ -744,7 +722,7 @@ int main()
 
 				for (colony<int>::iterator the_iterator = i_colony.begin(); the_iterator != i_colony.end();)
 				{
-					if ((xor_rand() & 7) == 0)
+					if ((plf::rand() & 7) == 0)
 					{
 						the_iterator = i_colony.erase(the_iterator);
 						--count;
@@ -902,7 +880,7 @@ int main()
 
 			for (colony<int>::iterator it = i_colony.begin(); it < i_colony.end(); ++it)
 			{
-				if ((xor_rand() & 1) == 0)
+				if ((plf::rand() & 1) == 0)
 				{
 					it = i_colony.erase(it);
 				}
@@ -951,8 +929,8 @@ int main()
 					it2 = it1 = i_colony.begin();
 
 					size = static_cast<unsigned int>(i_colony.size());
-					range1 = xor_rand() % size;
-					range2 = range1 + 1 + (xor_rand() % (size - range1));
+					range1 = plf::rand() % size;
+					range2 = range1 + 1 + (plf::rand() % (size - range1));
 					advance(it1, static_cast<int>(range1));
 					advance(it2, static_cast<int>(range2));
 
@@ -1005,8 +983,8 @@ int main()
 					it2 = it1 = i_colony.begin();
 
 					size = static_cast<unsigned int>(i_colony.size());
-					range1 = xor_rand() % size;
-					range2 = range1 + 1 + (xor_rand() % (size - range1));
+					range1 = plf::rand() % size;
+					range2 = range1 + 1 + (plf::rand() % (size - range1));
 					advance(it1, static_cast<int>(range1));
 					advance(it2, static_cast<int>(range2));
 
@@ -1035,7 +1013,7 @@ int main()
 
 					if (i_colony.size() > 100)
 					{ // Test to make sure our stored erased_locations are valid & fill-insert is functioning properly in these scenarios
-						const unsigned int extra_size = xor_rand() & 127;
+						const unsigned int extra_size = plf::rand() & 127;
 						i_colony.insert(extra_size, 5);
 
 						if (i_colony.size() != i_colony.group_size_sum())
@@ -1128,8 +1106,8 @@ int main()
 					ss_it2 = ss_it1 = ss_nt.begin();
 
 					size = static_cast<unsigned int>(ss_nt.size());
-					range1 = xor_rand() % size;
-					range2 = range1 + 1 + (xor_rand() % (size - range1));
+					range1 = plf::rand() % size;
+					range2 = range1 + 1 + (plf::rand() % (size - range1));
 					advance(ss_it1, static_cast<int>(range1));
 					advance(ss_it2, static_cast<int>(range2));
 
@@ -1181,7 +1159,7 @@ int main()
 
 			for (unsigned int temp = 0; temp != 50000; ++temp)
 			{
-				i_colony.insert(xor_rand() & 65535);
+				i_colony.insert(plf::rand() & 65535);
 			}
 
 			i_colony.sort();
@@ -1226,7 +1204,7 @@ int main()
 		{
 			title2("Different insertion-style tests");
 
-			#ifdef PLF_INITIALIZER_LIST_SUPPORT
+			#ifdef PLF_TEST_INITIALIZER_LIST_SUPPORT
 				colony<int> i_colony({1, 2, 3});
 
 				failpass("Initializer-list constructor test", i_colony.size() == 3);
@@ -1359,7 +1337,7 @@ int main()
 
 			for (unsigned int internal_loop_counter = 0; internal_loop_counter != 10; ++internal_loop_counter)
 			{
-				const unsigned int capacity = xor_rand() & 65535;
+				const unsigned int capacity = plf::rand() & 65535;
 				i_colony.assign(capacity, 1);
 
 				total = 0;
@@ -1398,7 +1376,7 @@ int main()
 
 			i_colony.assign(i_vector.begin(), i_vector.end());
 
-			plf::colony<int>::iterator it = i_colony.begin();
+			colony<int>::iterator it = i_colony.begin();
 			bool fail = false;
 
 			for (int counter = 1; counter != 11; ++counter, ++it)
@@ -1418,7 +1396,7 @@ int main()
 
 			for (unsigned int internal_loop_counter = 0; internal_loop_counter != 10; ++internal_loop_counter)
 			{
-				const unsigned int capacity = xor_rand() & 65535;
+				const unsigned int capacity = plf::rand() & 65535;
 				i_vector.assign(capacity, 1);
 				i_colony.assign(i_vector.begin(), i_vector.end());
 
@@ -1449,7 +1427,7 @@ int main()
 
 			i_colony.clear();
 
-			#ifdef PLF_INITIALIZER_LIST_SUPPORT
+			#ifdef PLF_TEST_INITIALIZER_LIST_SUPPORT
 				i_colony.assign({1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 				it = i_colony.begin();
 
@@ -1469,7 +1447,7 @@ int main()
 		}
 
 
-		#ifdef PLF_VARIADICS_SUPPORT
+		#ifdef PLF_TEST_VARIADICS_SUPPORT
 		{
 			title2("Perfect Forwarding tests");
 
@@ -1510,7 +1488,7 @@ int main()
 		{
 			title2("Non-copyable type test");
 
-			plf::colony<non_copyable_type> temp;
+			colony<non_copyable_type> temp;
 
 			temp.emplace(1);
 			temp.emplace(2);
@@ -1660,7 +1638,7 @@ int main()
 
 				for (colony<int>::iterator current = colony2.begin(); current != colony2.end();)
 				{
-					if ((xor_rand() & 7) == 0)
+					if ((plf::rand() & 7) == 0)
 					{
 						current = colony2.erase(current);
 					}
@@ -1704,7 +1682,7 @@ int main()
 
 				for (colony<int>::iterator current = colony2.begin(); current != colony2.end();)
 				{
-					if ((xor_rand() & 3) == 0)
+					if ((plf::rand() & 3) == 0)
 					{
 						current = colony2.erase(current);
 					}
@@ -1717,7 +1695,7 @@ int main()
 
 				for (colony<int>::iterator current = colony1.begin(); current != colony1.end();)
 				{
-					if ((xor_rand() & 1) == 0)
+					if ((plf::rand() & 1) == 0)
 					{
 						current = colony1.erase(current);
 					}
@@ -1837,7 +1815,7 @@ int main()
 
 				for (colony<int>::iterator current = colony2.begin(); current != colony2.end();)
 				{
-					if ((xor_rand() & 1) == 0)
+					if ((plf::rand() & 1) == 0)
 					{
 						current = colony2.erase(current);
 					}
@@ -1850,7 +1828,7 @@ int main()
 
 				for (colony<int>::iterator current = colony1.begin(); current != colony1.end();)
 				{
-					if ((xor_rand() & 1) == 0)
+					if ((plf::rand() & 1) == 0)
 					{
 						current = colony1.erase(current);
 					}
@@ -1887,11 +1865,11 @@ int main()
 				{
 					for (colony<int>::iterator current = colony1.begin(); current != colony1.end();)
 					{
-						if ((xor_rand() & 3) == 0)
+						if ((plf::rand() & 3) == 0)
 						{
 							current = colony1.erase(current);
 						}
-						else if ((xor_rand() & 7) == 0)
+						else if ((plf::rand() & 7) == 0)
 						{
 							colony1.insert(433);
 							++current;
@@ -1911,10 +1889,10 @@ int main()
 		{
 			title2("erase_if tests");
 
-			plf::colony<int> i_colony(100, 100);
+			colony<int> i_colony(100, 100);
 
 			i_colony.insert(100, 200);
-			plf::colony<int> i_colony2 = i_colony;
+			colony<int> i_colony2 = i_colony;
 
 			erase(i_colony, 100);
 			int total = std::accumulate(i_colony.begin(), i_colony.end(), 0);
@@ -1931,7 +1909,7 @@ int main()
 
 			for(int count = 0; count != 1000; ++count)
 			{
-				i_colony.insert((xor_rand() & 1));
+				i_colony.insert((plf::rand() & 1));
 			}
 
 			i_colony2 = i_colony;
@@ -1953,7 +1931,7 @@ int main()
 				i_colony.insert(count);
 			}
 
-			#ifdef PLF_MOVE_SEMANTICS_SUPPORT // approximating checking for C++11 here
+			#ifdef PLF_TEST_MOVE_SEMANTICS_SUPPORT // approximating checking for C++11 here
 				erase_if(i_colony, std::bind(std::greater<int>(), std::placeholders::_1, 499));
 			#else // C++03 or lower
 				erase_if(i_colony, std::bind2nd(std::greater<int>(), 499));
